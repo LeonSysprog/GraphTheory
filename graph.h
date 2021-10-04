@@ -10,7 +10,7 @@
 using namespace std;
 
 struct RelatedNode {
-    auto data;
+    string data;
     int weight;
     struct RelatedNode *next = nullptr;
 };
@@ -45,15 +45,15 @@ class Graph {
         int count;
         bool WeightFlag, OrientFlag; 
 
-        map<auto, RelatedNode*> AdjacencyList;
-        map<pair<auto, auto>, int> EdgeList;
+        map<string, RelatedNode*> AdjacencyList;
+        map<pair<string, string>, int> EdgeList;
 
         void AdjacencyListToEdgeList() {
             for (auto node : AdjacencyList) {
                 struct RelatedNode *end = node.second;
 
                 while (end) {
-                    EdgeList.insert({node.first, end->data}, end->weight);
+                    EdgeList.insert(make_pair(node.first, end->data), end->weight);
                     end = end->next;
                 }
             }
@@ -79,11 +79,12 @@ class Graph {
                 // set AdjacencyList
                 RelatedNode *RelatedList, *pos;
 
-                if (nodes.size() - 1 > 0)
+                if (nodes.size() - 1 > 0) {
                     RelatedList = new RelatedNode();
                     pos = RelatedList;
+                }
                 else {
-                    AdjacencyList.AddNode(nodes[0], nullptr);
+                    AddNode(nodes[0], nullptr);
                     continue;
                 }
 
@@ -124,14 +125,14 @@ class Graph {
                     pos = new RelatedNode();
                 }
 
-                AdjacencyList.AddNode({nodes[0], RelatedList});
+                AddNode(make_pair(nodes[0], RelatedList));
 
             }
 
             fin.close();
         }
 
-        Graph(map<auto, RelatedNode*> AdjList, map<pair<auto, auto>, int> EList) {
+        Graph(map<string, RelatedNode*> AdjList, map<pair<string, string>, int> EList) {
             AdjacencyList = AdjList;
             EdgeList = EList;
         }
@@ -140,31 +141,31 @@ class Graph {
             return count;
         }
 
-        map<auto, RelatedNode*> GetAdjacencyList() {
+        map<string, RelatedNode*> GetAdjacencyList() {
             return AdjacencyList;
         }
 
-        map<pair<auto, auto>, int> GetEdgeList() {
+        map<pair<string, string>, int> GetEdgeList() {
             return EdgeList;
         }
 
-        void AddNode(pair<auto, RelatedNode*> node) {
+        void AddNode(pair<string, RelatedNode*> node) {
             AdjacencyList.insert(node);
         }
 
-        void AddEdge(auto begin, auto end, int weight) {
-            EdgeList.insert({begin, end}, weight);
+        void AddEdge(string begin, string end, int weight) {
+            EdgeList.insert(make_pair(begin, end), weight);
         }
 
-        void DelNode(auto data) {
+        void DelNode(string data) {
             AdjacencyList.erase(data);
         }
 
-        void DelEdge(auto begin, auto end) {
-            EdgeList.erase({begin, end});
+        void DelEdge(string begin, string end) {
+            EdgeList.erase(make_pair(begin, end));
         }
 
-        RelatedNode* GetRelatedList(auto key) {
+        RelatedNode* GetRelatedList(string key) {
             return AdjacencyList[key];
         }
 
@@ -174,7 +175,7 @@ class Graph {
             fout << count << endl;
             for (int index = 0; index < count; ++index) {
                 fout << AdjacencyList[index] << " ";
-                struct RelatedNode *end = AdjacencyList[ListIndex]->RelatedList;
+                struct RelatedNode *end = AdjacencyList[index]->RelatedList;
 
                 while (end) {
                     fout << end->data;
@@ -189,6 +190,7 @@ class Graph {
             fout.close();
         }
 
+        /**
         Graph Graph::operator=(Graph g) {
             if (g.GetCount() != count) {
                 throw -1;
@@ -196,5 +198,6 @@ class Graph {
 
             return Graph(g.GetAdjacencyList(), g.GetEdgeList());
         }
-}
+        **/
+};
 #endif
