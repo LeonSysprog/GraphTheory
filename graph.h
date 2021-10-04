@@ -15,8 +15,10 @@ struct RelatedNode {
     struct RelatedNode *next = nullptr;
 };
 
-// AdjacencyList
-// 5
+// AdjacencyList with weight
+// 1 - weight flag(if not than without brackets)
+// 1 - orient flag(if not than dup)
+// 5 - count of nodes
 // 1 2(34) 3(25) 5(14)
 // 2 4(12) 5(14)
 // 3 5(27)
@@ -24,6 +26,8 @@ struct RelatedNode {
 // 5
 
 // EdgeList
+// 1 - weight flag(if not than without brackets)
+// 1 - orient flag(if not than dup)
 // 5
 // 1 2 34
 // 1 3 25
@@ -34,11 +38,12 @@ struct RelatedNode {
 // 4 1 25
 // 5
 
-// Учесть ориентированность и вес
+// Add console
 
 class Graph {
     private:
         int count;
+        bool WeightFlag, OrientFlag; 
 
         map<auto, RelatedNode*> AdjacencyList;
         map<pair<auto, auto>, int> EdgeList;
@@ -60,7 +65,7 @@ class Graph {
         Graph(string path) {
             ifstream fin(path);
 
-            fin >> count;
+            fin >> WeightFlag >> OrientFlag >> count;
 
             for (int index = 0; index < count; ++index) {
                 string str;
@@ -85,11 +90,34 @@ class Graph {
                 for (int id = 1; id < nodes.size(); ++id) {
                     stringstream ss(nodes[id]);
 
+                    if (!WeightFlag)
+                        pos->data = str;
+
                     while (getline(ss, str, '(')) {
-                        if (str[str.size() - 1] != ')')
+                        if (str[str.size() - 1] != ')') {
                             pos->data = str;
-                        else
+
+                            if (!OrientFlag) {
+                                if (!AdjacencyList.count(str)) {
+                                    RelatedNode *lst = GetRelatedList(str);
+                                    while (lst->next)
+                                        lst = lst->next;
+                                    lst->next = new RelatedNode();
+                                    lst->data = pos->data;
+                                }
+                            }
+                        }
+                        else {
                             pos->weight = stoi(str.substr(0, str.size() - 1));
+
+                            if (!OrientFlag) {
+                                RelatedNode *lst = GetRelatedList(str);
+                                while (lst->next)
+                                        lst = lst->next;
+                                lst->next = new RelatedNode();
+                                lst->weight = pos->weight;
+                            }
+                        }
                     }
 
                     pos = pos->next;
@@ -101,6 +129,11 @@ class Graph {
             }
 
             fin.close();
+        }
+
+        Graph(map<auto, RelatedNode*> AdjList, map<pair<auto, auto>, int> EList) {
+            AdjacencyList = AdjList;
+            EdgeList = EList;
         }
 
         int GetCount() {
@@ -120,14 +153,20 @@ class Graph {
         }
 
         void AddEdge(auto begin, auto end, int weight) {
-
+            EdgeList.insert({begin, end}, weight);
         }
 
         void DelNode(auto data) {
             AdjacencyList.erase(data);
         }
 
-        void DelEdge(auto begin, auto end) {}
+        void DelEdge(auto begin, auto end) {
+            EdgeList.erase({begin, end});
+        }
+
+        RelatedNode* GetRelatedList(auto key) {
+            return AdjacencyList[key];
+        }
 
         void WriteInFile(string path) {
             ofstream fout(path);
@@ -138,7 +177,9 @@ class Graph {
                 struct RelatedNode *end = AdjacencyList[ListIndex]->RelatedList;
 
                 while (end) {
-                    fout << end->data << "(" << end->weight << ")" << " ";
+                    fout << end->data;
+                    if (WeightFlag)
+                        fout << "(" << end->weight << ")" << " ";
                     end = end->next;
                 }
 
@@ -148,13 +189,12 @@ class Graph {
             fout.close();
         }
 
-        =operator(Graph g) {
+        Graph Graph::operator=(Graph g) {
             if (g.GetCount() != count) {
-                // throw exception
+                throw -1;
             }
 
-            AdjacencyList = g.GetAdjacencyList();
-            EdgeList = g.GetEdgeList();
+            return Graph(g.GetAdjacencyList(), g.GetEdgeList());
         }
 }
 #endif
