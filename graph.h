@@ -1,7 +1,9 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
+#include <iostream>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <cstdlib>
 #include <vector>
@@ -53,7 +55,7 @@ class Graph {
                 struct RelatedNode *end = node.second;
 
                 while (end) {
-                    EdgeList.insert(make_pair(node.first, end->data), end->weight);
+                    EdgeList.insert(make_pair(make_pair(node.first, end->data), end->weight));
                     end = end->next;
                 }
             }
@@ -67,14 +69,21 @@ class Graph {
 
             fin >> WeightFlag >> OrientFlag >> count;
 
-            for (int index = 0; index < count; ++index) {
-                string str;
+            string str_newline;
+            while (getline(fin, str_newline, '\n')) {
 
                 // split string
                 vector<string> nodes;
 
-                while (getline(fin, str, ' '))
-                    nodes.push_back(str);
+                istringstream str_space(str_newline);
+                string str_node;
+
+                while (getline(str_space, str_node, ' ')) {
+                    nodes.push_back(str_node);
+                    cout << str_node << endl;
+                }
+
+                cout << endl;
 
                 // set AdjacencyList
                 RelatedNode *RelatedList, *pos;
@@ -84,23 +93,25 @@ class Graph {
                     pos = RelatedList;
                 }
                 else {
-                    AddNode(nodes[0], nullptr);
+                    AddNode(make_pair(nodes[0], nullptr));
                     continue;
                 }
 
                 for (int id = 1; id < nodes.size(); ++id) {
-                    stringstream ss(nodes[id]);
+                    istringstream ss(nodes[id]);
+
+                    cout << "str_node:" << nodes[id] << endl;
 
                     if (!WeightFlag)
-                        pos->data = str;
+                        pos->data = str_node;
 
-                    while (getline(ss, str, '(')) {
-                        if (str[str.size() - 1] != ')') {
-                            pos->data = str;
+                    while (getline(ss, str_node, '(')) {
+                        if (str_node[str_node.size() - 1] != ')') {
+                            pos->data = str_node;
 
                             if (!OrientFlag) {
-                                if (!AdjacencyList.count(str)) {
-                                    RelatedNode *lst = GetRelatedList(str);
+                                if (!AdjacencyList.count(nodes[0])) {
+                                    RelatedNode *lst = GetRelatedList(str_node);
                                     while (lst->next)
                                         lst = lst->next;
                                     lst->next = new RelatedNode();
@@ -109,10 +120,10 @@ class Graph {
                             }
                         }
                         else {
-                            pos->weight = stoi(str.substr(0, str.size() - 1));
+                            pos->weight = stoi(str_node.substr(0, str_node.size() - 1));
 
                             if (!OrientFlag) {
-                                RelatedNode *lst = GetRelatedList(str);
+                                RelatedNode *lst = GetRelatedList(str_node);
                                 while (lst->next)
                                         lst = lst->next;
                                 lst->next = new RelatedNode();
@@ -121,18 +132,24 @@ class Graph {
                         }
                     }
 
-                    pos = pos->next;
-                    pos = new RelatedNode();
+                    if (id != nodes.size() - 1) {
+                        pos->next = new RelatedNode();
+                        pos = pos->next;
+                    }
                 }
 
-                AddNode(make_pair(nodes[0], RelatedList));
+                if (nodes.size())
+                    AddNode(make_pair(nodes[0], RelatedList));
 
             }
 
             fin.close();
         }
 
-        Graph(map<string, RelatedNode*> AdjList, map<pair<string, string>, int> EList) {
+        Graph(int c, bool Weight, bool Oriented, map<string, RelatedNode*> AdjList, map<pair<string, string>, int> EList) {
+            count = c;
+            WeightFlag = Weight;
+            OrientFlag = Oriented;
             AdjacencyList = AdjList;
             EdgeList = EList;
         }
@@ -154,9 +171,10 @@ class Graph {
         }
 
         void AddEdge(string begin, string end, int weight) {
-            EdgeList.insert(make_pair(begin, end), weight);
+            EdgeList.insert(make_pair(make_pair(begin, end), weight));
         }
 
+        // Del in RelatedList
         void DelNode(string data) {
             AdjacencyList.erase(data);
         }
@@ -173,9 +191,9 @@ class Graph {
             ofstream fout(path);
 
             fout << count << endl;
-            for (int index = 0; index < count; ++index) {
-                fout << AdjacencyList[index] << " ";
-                struct RelatedNode *end = AdjacencyList[index]->RelatedList;
+            for (auto node : AdjacencyList) {
+                fout << node.first << " ";
+                struct RelatedNode *end = node.second;
 
                 while (end) {
                     fout << end->data;
@@ -190,14 +208,8 @@ class Graph {
             fout.close();
         }
 
-        /**
-        Graph Graph::operator=(Graph g) {
-            if (g.GetCount() != count) {
-                throw -1;
-            }
-
-            return Graph(g.GetAdjacencyList(), g.GetEdgeList());
+        Graph operator=(Graph g) {
+            return Graph(g.count, g.WeightFlag, g.OrientFlag, g.GetAdjacencyList(), g.GetEdgeList());
         }
-        **/
 };
 #endif
