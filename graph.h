@@ -50,17 +50,6 @@ class Graph {
         map<string, RelatedNode*> AdjacencyList;
         map<pair<string, string>, int> EdgeList;
 
-        void AdjacencyListToEdgeList() {
-            for (auto node : AdjacencyList) {
-                struct RelatedNode *end = node.second;
-
-                while (end) {
-                    EdgeList.insert(make_pair(make_pair(node.first, end->data), end->weight));
-                    end = end->next;
-                }
-            }
-        }
-
     public:
         Graph() {}
         
@@ -68,6 +57,7 @@ class Graph {
             ifstream fin(path);
 
             fin >> WeightFlag >> OrientFlag >> count;
+        
 
             string str_newline;
             while (getline(fin, str_newline, '\n')) {
@@ -83,7 +73,7 @@ class Graph {
                     cout << str_node << endl;
                 }
 
-                cout << endl;
+                // cout << endl;
 
                 // set AdjacencyList
                 RelatedNode *RelatedList, *pos;
@@ -100,7 +90,7 @@ class Graph {
                 for (int id = 1; id < nodes.size(); ++id) {
                     istringstream ss(nodes[id]);
 
-                    cout << "str_node:" << nodes[id] << endl;
+                    // cout << "str_node:" << nodes[id] << endl;
 
                     if (!WeightFlag)
                         pos->data = str_node;
@@ -166,21 +156,44 @@ class Graph {
             return EdgeList;
         }
 
-        void AddNode(pair<string, RelatedNode*> node) {
-            AdjacencyList.insert(node);
-        }
-
         void AddEdge(string begin, string end, int weight) {
             EdgeList.insert(make_pair(make_pair(begin, end), weight));
         }
 
-        // Del in RelatedList
-        void DelNode(string data) {
-            AdjacencyList.erase(data);
+        void AddNode(pair<string, RelatedNode*> node) {
+            AdjacencyList.insert(node);
+            RelatedNode *pos = node.second;
+
+            while (pos) {
+                AddEdge(node.first, pos->data, pos->weight);
+                pos = pos->next;
+            }
+
         }
 
         void DelEdge(string begin, string end) {
             EdgeList.erase(make_pair(begin, end));
+        }
+
+        void DelNode(string data) {
+            AdjacencyList.erase(data);
+            for (auto &node : AdjacencyList) {
+                RelatedNode *lst = node.second;
+                RelatedNode *pos = lst, *prev;
+                while (pos) {
+                    if (pos->data == data) {
+                        prev->next = pos->next;
+                        delete pos;
+                    }
+
+                    prev = pos;
+                    pos = pos->next;
+                }
+            }
+
+            for (auto &node : EdgeList)
+                if (node.first.first == data)
+                    EdgeList.erase(node.first);
         }
 
         RelatedNode* GetRelatedList(string key) {
@@ -197,8 +210,12 @@ class Graph {
 
                 while (end) {
                     fout << end->data;
+
                     if (WeightFlag)
                         fout << "(" << end->weight << ")" << " ";
+                    else
+                        fout << " ";
+
                     end = end->next;
                 }
 
@@ -206,6 +223,62 @@ class Graph {
             }
 
             fout.close();
+        }
+
+        void DisplayAdjacencyList() {
+            if (OrientFlag)
+                cout << "Oriented graph" << endl;
+
+            if (WeightFlag)
+                cout << "Weight graph" << endl;
+
+            cout << "Count: " << count << endl;
+
+            for (auto node : AdjacencyList) {
+                cout << node.first << " ";
+                struct RelatedNode *end = node.second;
+
+                while (end) {
+                    cout << end->data;
+                    if (WeightFlag)
+                        cout << "(" << end->weight << ")" << " ";
+                    end = end->next;
+                }
+
+                cout << endl;
+            }
+        }
+
+        void AdjacencyListToEdgeList() {
+            for (auto node : AdjacencyList) {
+                struct RelatedNode *end = node.second;
+
+                while (end) {
+                    EdgeList.insert(make_pair(make_pair(node.first, end->data), end->weight));
+                    end = end->next;
+                }
+            }
+        }
+
+        void DisplayEdgeList() {
+            if (OrientFlag)
+                cout << "Oriented graph" << endl;
+            else
+                cout << "Not Oriented graph" << endl;
+
+            if (WeightFlag)
+                cout << "Weight graph" << endl;
+            else 
+                cout << "Not Weight graph" << endl;
+
+            cout << "Count: " << count << endl;
+
+            for (auto node : EdgeList) {
+                if (WeightFlag)
+                    cout << node.first.first << " " << node.first.second << " " << node.second << endl;
+                else
+                    cout << node.first.first << " " << node.first.second << endl;
+            }
         }
 
         Graph operator=(Graph g) {
