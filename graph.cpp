@@ -43,19 +43,12 @@ int main() {
     // 4 1
     // 5 1
 
-    Graph g("input1.txt");
+    Graph g("input3.txt");
     
     // g.DelNode("3");
-    
-    /**
-    RelatedNode *lst = new RelatedNode();
-    lst->data = "1";
-    lst->weight = 26;
-    g.AddNode(make_pair("7", lst));
-    **/
+    // g.AddEdge("1", "2", 10);
     
     g.WriteInFile("output.txt");
-    cout << g.GetCount() << endl;
     g.DisplayAdjacencyList();
 
     /**
